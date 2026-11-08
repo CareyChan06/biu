@@ -57,9 +57,6 @@ struct Index {
 
   aboutToAppear(): void {
     this.startStatsPolling();
-    setTimeout(() => {
-      this.runProbes();
-    }, 500);
   }
 
   aboutToDisappear(): void {
@@ -168,9 +165,6 @@ struct Index {
       this.isRunning = true;
       this.statusText = '加速中';
       this.startStatsPolling();
-      setTimeout(() => {
-        this.runProbes();
-      }, 1500);
     }).catch((err: Error) => {
       hilog.error(DOMAIN_ID, TAG, 'VPN start failed: %{public}s', JSON.stringify(err));
       this.statusText = '启动失败';
