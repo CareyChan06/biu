@@ -98,6 +98,13 @@ biu/
 
 环境：DevEco Studio（含 API 26 SDK）、HarmonyOS SDK、NDK、Node.js。
 
+`build-profile.json5` 已被 `.gitignore` 忽略，克隆后先复制模板，再在
+DevEco Studio 中配置自动签名（会生成 `signingConfigs`）：
+
+```bash
+cp build-profile.example.json5 build-profile.json5
+```
+
 ```bash
 export DEVECO_SDK_HOME='D:\Program Files\Huawei\DevEco Studio\sdk'
 export JAVA_HOME='D:\Program Files\Huawei\DevEco Studio\jbr'
@@ -110,8 +117,8 @@ export PATH="/d/Program Files/Huawei/DevEco Studio/jbr/bin:/d/Program Files/Huaw
 产物：`entry/build/default/outputs/default/entry-default-signed.hap`
 
 > `build-profile.json5` 中的 `signingConfigs` 包含本机证书路径和加密后的口令，
-> 属于本地配置，**不要提交**。仓库中的版本保持为空，检出后请在 DevEco Studio 里
-> 重新配置自动签名。
+> 属于本地配置，已加入 `.gitignore`。仓库只保留不含签名的
+> `build-profile.example.json5`。
 
 ## 安装与使用
 

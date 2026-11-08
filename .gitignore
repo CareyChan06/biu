@@ -10,3 +10,4 @@ build/
 *.hsp
 *.har
 local.properties
+build-profile.json5
