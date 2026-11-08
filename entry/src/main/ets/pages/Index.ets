@@ -1,7 +1,8 @@
 import { vpnExtension } from '@kit.NetworkKit';
-import { Want } from '@kit.AbilityKit';
+import { common, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
+import { notificationManager } from '@kit.NotificationKit';
 
 const TAG = 'BiuUI';
 const DOMAIN_ID = 0x0000;
@@ -96,7 +97,23 @@ struct Index {
     }
   }
 
+  private async ensureNotificationPermission(): Promise<void> {
+    try {
+      if (notificationManager.isNotificationEnabledSync()) return;
+      const context = getContext(this) as common.UIAbilityContext;
+      await notificationManager.requestEnableNotification(context);
+    } catch (e) {
+      hilog.warn(DOMAIN_ID, TAG, 'notification permission: %{public}s', JSON.stringify(e));
+    }
+  }
+
   private startVpn(): void {
+    this.ensureNotificationPermission().finally(() => {
+      this.launchVpn();
+    });
+  }
+
+  private launchVpn(): void {
     const want: Want = {
       bundleName: 'com.biu.app',
       abilityName: 'BiuVpnExtAbility',

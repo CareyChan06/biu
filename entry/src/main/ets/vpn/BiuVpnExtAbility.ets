@@ -2,6 +2,7 @@ import { VpnExtensionAbility, vpnExtension } from '@kit.NetworkKit';
 import { Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import biu from 'libbiu.so';
+import { VpnNotification } from './VpnNotification';
 
 const TAG = 'BiuVPN';
 const DOMAIN_ID = 0x0000;
@@ -10,11 +11,13 @@ const TUN_MTU = 1500;
 
 export default class BiuVpnExtAbility extends VpnExtensionAbility {
   private vpnConnection: vpnExtension.VpnConnection | null = null;
+  private notification: VpnNotification | null = null;
 
   onCreate(want: Want): void {
     hilog.info(DOMAIN_ID, TAG, 'VpnExtensionAbility onCreate');
     hilog.info(DOMAIN_ID, TAG, 'ext filesDir: %{public}s', this.context.filesDir);
     biu.setStatsPath(`${this.context.filesDir}/biu_stats.json`);
+    this.notification = new VpnNotification(this.context.filesDir);
     this.setupVpn();
   }
 
@@ -58,6 +61,10 @@ export default class BiuVpnExtAbility extends VpnExtensionAbility {
 
       biu.startTun(tunFd);
       hilog.info(DOMAIN_ID, TAG, 'TUN reader started');
+
+      if (this.notification !== null) {
+        await this.notification.start();
+      }
     } catch (err) {
       hilog.error(DOMAIN_ID, TAG, 'VPN setup failed: %{public}s', JSON.stringify(err));
     }
@@ -65,6 +72,10 @@ export default class BiuVpnExtAbility extends VpnExtensionAbility {
 
   onDestroy(): void {
     hilog.info(DOMAIN_ID, TAG, 'VpnExtensionAbility onDestroy');
+    if (this.notification !== null) {
+      this.notification.stop();
+      this.notification = null;
+    }
     biu.stopTun();
     if (this.vpnConnection) {
       this.vpnConnection.destroy().then(() => {
