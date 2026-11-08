@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Biu GitHub accelerator"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Biu main ability"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Biu"
+    }
+  ]
+}
