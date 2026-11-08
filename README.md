@@ -23,6 +23,9 @@
 - **状态统计**：扩展进程把运行状态和计数写入
   `/data/storage/el2/base/haps/entry/files/biu_stats.json`，
   UI 轮询该文件并校验新鲜度后展示。
+- **连通性测试**：首页可随时对 `github.com` 做 DNS 解析，并对
+  `github.com` / `api.github.com` 发起 HTTPS HEAD 探测，显示解析地址、
+  响应状态与耗时，用于确认加速是否真正生效。
 
 ## 工作原理
 
