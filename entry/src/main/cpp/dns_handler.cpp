@@ -3,14 +3,37 @@
 #include "tun_reader.h"
 
 #include <arpa/inet.h>
+#include <atomic>
 #include <cstring>
 #include <mutex>
 #include <set>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <unistd.h>
+#include <hilog/log.h>
+
+#undef LOG_TAG
+#define LOG_TAG "BiuDns"
+
+static std::atomic<uint32_t> g_log_count{0};
 
 static std::mutex g_domain_mutex;
-static std::set<std::string> g_whitelist;
+static std::set<std::string> g_whitelist = {
+    "github.com",
+    "api.github.com",
+    "raw.githubusercontent.com",
+    "gist.github.com",
+    "github.githubassets.com",
+    "avatars.githubusercontent.com",
+    "objects.githubusercontent.com",
+    "github.io",
+    "github.global.ssl.fastly.net",
+    "collector.github.com",
+    "central.github.com",
+    "github.community",
+    "github.blog",
+    "githubusercontent.com",
+};
 
 static const char* UPSTREAM_DNS = "223.5.5.5";
 static const int DNS_TIMEOUT_MS = 3000;
@@ -80,9 +103,14 @@ static uint16_t checksum(const uint8_t* data, size_t len) {
 static std::vector<uint8_t> build_dns_response(
     const uint8_t* query, size_t query_len, uint32_t answer_ip)
 {
-    std::vector<uint8_t> resp(query, query + query_len);
-    if (resp.size() < 12) return {};
+    if (query_len < 12) return {};
 
+    size_t pos = 12;
+    while (pos < query_len && query[pos] != 0) pos += query[pos] + 1;
+    if (pos + 5 > query_len) return {};
+    size_t question_end = pos + 5;
+
+    std::vector<uint8_t> resp(query, query + question_end);
     resp[2] = 0x81;
     resp[3] = 0x80;
     resp[6] = 0x00;
@@ -92,20 +120,15 @@ static std::vector<uint8_t> build_dns_response(
     resp[10] = 0x00;
     resp[11] = 0x00;
 
-    size_t pos = 12;
-    while (pos < resp.size() && resp[pos] != 0) {
-        pos += resp[pos] + 1;
-    }
-    pos += 5;
-
     uint8_t answer[] = {
         0xC0, 0x0C,
+        0x00, 0x01,
         0x00, 0x01,
         0x00, 0x00, 0x00, 0x3C,
         0x00, 0x04,
         0, 0, 0, 0
     };
-    memcpy(answer + 10, &answer_ip, 4);
+    memcpy(answer + 12, &answer_ip, 4);
     resp.insert(resp.end(), answer, answer + sizeof(answer));
     return resp;
 }
@@ -214,9 +237,14 @@ DnsResult dns_handle(const uint8_t* packet, size_t len, int tun_fd) {
     }
 
     std::vector<uint8_t> dns_resp;
+    bool wl = is_whitelisted(domain);
+    uint32_t probe_ip = 0;
+    int probe_ms = -1;
 
-    if (qtype == 1 && is_whitelisted(domain)) {
+    if (qtype == 1 && wl) {
         ProbeResult best = prober_best_ip(domain);
+        probe_ip = best.ip;
+        probe_ms = best.latency_ms;
         if (best.ip != 0) {
             dns_resp = build_dns_response(dns, dns_len, best.ip);
             result.accelerated = true;
@@ -229,6 +257,16 @@ DnsResult dns_handle(const uint8_t* packet, size_t len, int tun_fd) {
 
     if (!dns_resp.empty()) {
         result.response = wrap_ip_udp(packet, len, dns_resp.data(), dns_resp.size());
+    }
+
+    if (wl || g_log_count.fetch_add(1) < 5) {
+        struct in_addr a{};
+        a.s_addr = probe_ip;
+        char ipbuf[INET_ADDRSTRLEN] = {0};
+        inet_ntop(AF_INET, &a, ipbuf, sizeof(ipbuf));
+        OH_LOG_INFO(LOG_APP, "q=%{public}s t=%{public}d wl=%{public}d accel=%{public}d ip=%{public}s ms=%{public}d rsp=%{public}d",
+                    domain.c_str(), qtype, wl ? 1 : 0, result.accelerated ? 1 : 0,
+                    ipbuf, probe_ms, result.response.empty() ? 0 : 1);
     }
 
     return result;

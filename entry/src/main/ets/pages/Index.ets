@@ -1,10 +1,16 @@
 import { vpnExtension } from '@kit.NetworkKit';
 import { Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import biu from 'libbiu.so';
+import { fileIo as fs } from '@kit.CoreFileKit';
 
 const TAG = 'BiuUI';
 const DOMAIN_ID = 0x0000;
+
+interface StatsData {
+  running: boolean;
+  dnsQueries: number;
+  acceleratedQueries: number;
+}
 
 const GITHUB_DOMAINS: string[] = [
   'github.com',
@@ -31,23 +37,54 @@ struct Index {
   @State acceleratedQueries: number = 0;
   @State statusText: string = '未启动';
   private statsTimer: number = -1;
+  private statsFilePath: string = '';
+  private statsReadFailed: boolean = false;
+
+  aboutToAppear(): void {
+    this.startStatsPolling();
+  }
 
   aboutToDisappear(): void {
     this.stopStatsPolling();
   }
 
+  private statsIsFresh(): boolean {
+    try {
+      const st = fs.statSync(this.statsFilePath);
+      const nowSec = Math.floor(Date.now() / 1000);
+      return (nowSec - st.mtime) <= 5;
+    } catch (e) {
+      return false;
+    }
+  }
+
   private startStatsPolling(): void {
+    if (this.statsTimer !== -1) return;
+    if (this.statsFilePath === '') {
+      try {
+        this.statsFilePath = `${getContext(this).filesDir}/biu_stats.json`;
+        hilog.info(DOMAIN_ID, TAG, 'stats path: %{public}s', this.statsFilePath);
+      } catch (e) {
+        hilog.error(DOMAIN_ID, TAG, 'get filesDir failed: %{public}s', JSON.stringify(e));
+        return;
+      }
+    }
     this.statsTimer = setInterval(() => {
       try {
-        const stats = biu.getStats();
-        this.isRunning = stats.running;
+        const text = fs.readTextSync(this.statsFilePath);
+        const stats = JSON.parse(text) as StatsData;
+        const running = stats.running && this.statsIsFresh();
+        this.isRunning = running;
         this.dnsQueries = stats.dnsQueries;
         this.acceleratedQueries = stats.acceleratedQueries;
-        if (stats.running) {
-          this.statusText = '加速中';
-        }
+        this.statusText = running ? '加速中' : '未启动';
+        this.statsReadFailed = false;
       } catch (e) {
-        hilog.error(DOMAIN_ID, TAG, 'getStats error: %{public}s', JSON.stringify(e));
+        if (!this.statsReadFailed) {
+          this.statsReadFailed = true;
+          hilog.warn(DOMAIN_ID, TAG, 'stats read failed: %{public}s %{public}s',
+            this.statsFilePath, JSON.stringify(e));
+        }
       }
     }, 1000);
   }
@@ -60,8 +97,6 @@ struct Index {
   }
 
   private startVpn(): void {
-    biu.setDomains(GITHUB_DOMAINS);
-
     const want: Want = {
       bundleName: 'com.biu.app',
       abilityName: 'BiuVpnExtAbility',
@@ -141,8 +176,8 @@ struct Index {
         .margin({ bottom: 40 })
 
       Row() {
-        this.StatCard('DNS 请求', this.dnsQueries.toString())
-        this.StatCard('已加速', this.acceleratedQueries.toString())
+        StatCard({ label: 'DNS 请求', value: this.dnsQueries.toString() })
+        StatCard({ label: '已加速', value: this.acceleratedQueries.toString() })
       }
       .width('100%')
       .justifyContent(FlexAlign.SpaceEvenly)
@@ -185,15 +220,20 @@ struct Index {
     .padding({ left: 24, right: 24 })
     .backgroundColor('#FFFFFF')
   }
+}
 
-  @Builder
-  StatCard(label: string, value: string) {
+@Component
+struct StatCard {
+  @Prop label: string;
+  @Prop value: string;
+
+  build() {
     Column() {
-      Text(value)
+      Text(this.value)
         .fontSize(28)
         .fontWeight(FontWeight.Bold)
         .fontColor('#1D2129')
-      Text(label)
+      Text(this.label)
         .fontSize(12)
         .fontColor('#86909C')
         .margin({ top: 4 })

@@ -8,6 +8,7 @@ add_library(biu SHARED
     tun_reader.cpp
     dns_handler.cpp
     ip_prober.cpp
+    tun_forward.cpp
 )
 
 target_link_libraries(biu PUBLIC

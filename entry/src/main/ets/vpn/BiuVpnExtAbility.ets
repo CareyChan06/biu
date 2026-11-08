@@ -13,6 +13,8 @@ export default class BiuVpnExtAbility extends VpnExtensionAbility {
 
   onCreate(want: Want): void {
     hilog.info(DOMAIN_ID, TAG, 'VpnExtensionAbility onCreate');
+    hilog.info(DOMAIN_ID, TAG, 'ext filesDir: %{public}s', this.context.filesDir);
+    biu.setStatsPath(`${this.context.filesDir}/biu_stats.json`);
     this.setupVpn();
   }
 
@@ -28,6 +30,21 @@ export default class BiuVpnExtAbility extends VpnExtensionAbility {
       ],
       mtu: TUN_MTU,
       dnsAddresses: [TUN_IP],
+      routes: [
+        {
+          interface: 'vpn-tun',
+          destination: {
+            address: { address: '0.0.0.0', family: 1 },
+            prefixLength: 0
+          },
+          gateway: {
+            address: TUN_IP,
+            family: 1
+          },
+          hasGateway: true,
+          isDefaultRoute: true
+        }
+      ],
       isIPv4Accepted: true,
       isIPv6Accepted: false,
     };

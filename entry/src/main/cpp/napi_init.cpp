@@ -40,12 +40,30 @@ static napi_value SetDomains(napi_env env, napi_callback_info info) {
         napi_get_element(env, args[0], i, &elem);
         size_t str_len = 0;
         napi_get_value_string_utf8(env, elem, nullptr, 0, &str_len);
-        std::string domain(str_len, '\0');
+        std::string domain(str_len + 1, '\0');
         napi_get_value_string_utf8(env, elem, domain.data(), str_len + 1, &str_len);
+        domain.resize(str_len);
         domains.push_back(domain);
     }
 
     dns_set_domains(domains);
+
+    napi_value undefined;
+    napi_get_undefined(env, &undefined);
+    return undefined;
+}
+
+static napi_value SetStatsPath(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    size_t str_len = 0;
+    napi_get_value_string_utf8(env, args[0], nullptr, 0, &str_len);
+    std::string path(str_len + 1, '\0');
+    napi_get_value_string_utf8(env, args[0], path.data(), str_len + 1, &str_len);
+    path.resize(str_len);
+    tun_set_stats_path(path.c_str());
 
     napi_value undefined;
     napi_get_undefined(env, &undefined);
@@ -76,6 +94,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"startTun", nullptr, StartTun, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"stopTun", nullptr, StopTun, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"setDomains", nullptr, SetDomains, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"setStatsPath", nullptr, SetStatsPath, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getStats", nullptr, GetStats, nullptr, nullptr, nullptr, napi_default, nullptr},
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
