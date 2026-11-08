@@ -11,6 +11,38 @@
     {
       "name": "bg_color",
       "value": "#F1F3F5"
+    },
+    {
+      "name": "page_bg",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "card_bg",
+      "value": "#F7F8FA"
+    },
+    {
+      "name": "text_primary",
+      "value": "#1D2129"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#86909C"
+    },
+    {
+      "name": "text_tertiary",
+      "value": "#C9CDD4"
+    },
+    {
+      "name": "success_color",
+      "value": "#00B42A"
+    },
+    {
+      "name": "danger_color",
+      "value": "#F53F3F"
+    },
+    {
+      "name": "dot_off",
+      "value": "#C9CDD4"
     }
   ]
 }

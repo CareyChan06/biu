@@ -134,28 +134,28 @@ struct Index {
       Text('Biu')
         .fontSize(36)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#0A59F7')
+        .fontColor($r('app.color.primary_color'))
         .margin({ top: 60, bottom: 8 })
 
       Text('GitHub 加速 · HarmonyOS')
         .fontSize(14)
-        .fontColor('#999')
+        .fontColor($r('app.color.text_secondary'))
         .margin({ bottom: 48 })
 
       Row() {
         Circle()
           .width(16)
           .height(16)
-          .fill(this.isRunning ? '#00B42A' : '#C9CDD4')
+          .fill(this.isRunning ? $r('app.color.success_color') : $r('app.color.text_tertiary'))
           .margin({ right: 8 })
         Text(this.statusText)
           .fontSize(18)
-          .fontColor(this.isRunning ? '#00B42A' : '#86909C')
+          .fontColor(this.isRunning ? $r('app.color.success_color') : $r('app.color.text_secondary'))
       }
       .width(160)
       .height(56)
       .borderRadius(28)
-      .backgroundColor('#F7F8FA')
+      .backgroundColor($r('app.color.card_bg'))
       .justifyContent(FlexAlign.Center)
       .margin({ bottom: 32 })
 
@@ -164,7 +164,7 @@ struct Index {
         .height(52)
         .fontSize(18)
         .fontWeight(FontWeight.Medium)
-        .backgroundColor(this.isRunning ? '#F53F3F' : '#0A59F7')
+        .backgroundColor(this.isRunning ? $r('app.color.danger_color') : $r('app.color.primary_color'))
         .borderRadius(26)
         .onClick(() => {
           if (this.isRunning) {
@@ -187,38 +187,38 @@ struct Index {
         Text('加速域名')
           .fontSize(14)
           .fontWeight(FontWeight.Medium)
-          .fontColor('#1D2129')
+          .fontColor($r('app.color.text_primary'))
           .margin({ bottom: 12 })
 
         ForEach(GITHUB_DOMAINS.slice(0, 6), (domain: string) => {
           Text(domain)
             .fontSize(12)
-            .fontColor('#86909C')
+            .fontColor($r('app.color.text_secondary'))
             .margin({ bottom: 4 })
         })
 
         Text(`共 ${GITHUB_DOMAINS.length} 个域名`)
           .fontSize(12)
-          .fontColor('#C9CDD4')
+          .fontColor($r('app.color.text_tertiary'))
           .margin({ top: 4 })
       }
       .width('90%')
       .padding(16)
       .borderRadius(12)
-      .backgroundColor('#F7F8FA')
+      .backgroundColor($r('app.color.card_bg'))
       .alignItems(HorizontalAlign.Start)
 
       Blank()
 
-      Text('本地 VPN DNS 优化 · 不改变系统路由')
+      Text('本地 VPN 转发 · 数据不出设备')
         .fontSize(11)
-        .fontColor('#C9CDD4')
+        .fontColor($r('app.color.text_tertiary'))
         .margin({ bottom: 24 })
     }
     .width('100%')
     .height('100%')
     .padding({ left: 24, right: 24 })
-    .backgroundColor('#FFFFFF')
+    .backgroundColor($r('app.color.page_bg'))
   }
 }
 
@@ -232,16 +232,16 @@ struct StatCard {
       Text(this.value)
         .fontSize(28)
         .fontWeight(FontWeight.Bold)
-        .fontColor('#1D2129')
+        .fontColor($r('app.color.text_primary'))
       Text(this.label)
         .fontSize(12)
-        .fontColor('#86909C')
+        .fontColor($r('app.color.text_secondary'))
         .margin({ top: 4 })
     }
     .width(140)
     .height(80)
     .borderRadius(12)
-    .backgroundColor('#F7F8FA')
+    .backgroundColor($r('app.color.card_bg'))
     .justifyContent(FlexAlign.Center)
   }
 }
